@@ -1,8 +1,11 @@
 <template>
   <div id="app" :class="{ shake: shake }">
     <div id="alert-holder">
-      <div class="alert-box" v-if="shake">
+      <div class="alert alert-box" v-if="shake">
         <p>Not a word!</p>
+      </div>
+      <div class="alert success-box" v-if="solved">
+        <p>Congratulations!</p>
       </div>
     </div>
     <div id="guess-holder">
@@ -38,7 +41,7 @@ export default {
   },
   data: function(){
     return{
-      answer:'STUPE',
+      answer:'',
       keyboards: generateKeyboards(),
       guesses:generateGuesses(),
       current_col:0,
@@ -46,7 +49,8 @@ export default {
       shake:false,
       known_letters:[],
       solved_letters:[],
-      false_letters:[]
+      false_letters:[],
+      solved:false
     }
   },
   methods:{
@@ -71,8 +75,8 @@ export default {
               }, 1500)
             }).then(response=>{
               try{
-                console.log(response);
-                this.checkAnswer()
+                console.log(response.status);
+                this.checkAnswer();
               }catch(error){
                 console.log('error')
               }
@@ -108,9 +112,9 @@ export default {
       this.current_col++;
       this.current_row=0;
       if(correct){
-        alert('Congratulations!');
-      this.current_col=-1;
-      this.current_row=-1;
+        this.solved = true;
+        this.current_col=-1;
+        this.current_row=-1;
       }
     },
     setLetters(key){
@@ -124,7 +128,16 @@ export default {
         return 'false';
       }
       return 'unknown';
+    },
+    generateWord(){
+      axios.get("https://random-word-api.herokuapp.com/word?length=5").then(response=>{
+        console.log(response.data)
+        this.answer = String(response.data[0]).toUpperCase();
+      })
     }
+  },
+  beforeMount(){
+    this.generateWord();
   }
 }
 </script>
@@ -161,23 +174,26 @@ body{
   background: rgb(105, 105, 105); 
   transition: .5s;
 }
-
 #alert-holder{
   position: absolute;
   display: grid;
   top: 20px;
   width: 100vw;
   justify-content: center;
-  text-align: center;
 }
-.alert-box{
-  background-color: rgb(196, 50, 40);
+.alert{
   color: white;
   width: 250px;
   text-align: center;
   padding: .2em;
   border-radius: 5px;
   font-size: 20px;
+}
+.alert-box{
+  background-color: rgb(196, 50, 40);
+}
+.success-box{
+  background-color: rgb(40, 196, 100);
 }
 #keyboard-holder{
   position: absolute;
