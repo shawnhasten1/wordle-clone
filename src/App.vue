@@ -1,19 +1,24 @@
 <template>
   <div id="app" :class="{ shake: shake }">
+    <div id="alert-holder">
+      <div class="alert-box" v-if="shake">
+        <p>Not a word!</p>
+      </div>
+    </div>
     <div id="guess-holder">
-      <div class="guess-row" v-for="guess in guesses" :key="guess">
-        <GuessTile v-for="guess_tile in guess" :key="guess_tile" :guess_tile="guess_tile"/>
+      <div class="guess-row" v-for="(guess, index) in guesses" :key="index">
+        <GuessTile v-for="(guess_tile, index) in guess" :key="index" :guess_tile="guess_tile"/>
       </div>
     </div>
     <div id="keyboard-holder">
       <div class="keyboard-layout" id="keyboard-layout-1">
-        <Keyboard v-for="keyboard in keyboards[0]" @setGuess="setGuess(keyboard)" :key="keyboard" :keyboard="keyboard"/>
+        <Keyboard v-for="(keyboard, index) in keyboards[0]" @setGuess="setGuess(keyboard)" :key="index" :letters="setLetters(keyboard.value)" :keyboard="keyboard"/>
       </div>    
       <div class="keyboard-layout" id="keyboard-layout-2">
-        <Keyboard v-for="keyboard in keyboards[1]" @setGuess="setGuess(keyboard)" :key="keyboard" :keyboard="keyboard"/>
+        <Keyboard v-for="(keyboard, index) in keyboards[1]" @setGuess="setGuess(keyboard)" :key="index" :letters="setLetters(keyboard.value)" :keyboard="keyboard"/>
       </div>    
       <div class="keyboard-layout" id="keyboard-layout-3">
-        <Keyboard v-for="keyboard in keyboards[2]" @setGuess="setGuess(keyboard)" :key="keyboard" :keyboard="keyboard"/>
+        <Keyboard v-for="(keyboard, index) in keyboards[2]" @setGuess="setGuess(keyboard)" :key="index" :letters="setLetters(keyboard.value)" :keyboard="keyboard"/>
       </div>    
     </div>
   </div>
@@ -33,11 +38,15 @@ export default {
   },
   data: function(){
     return{
+      answer:'STUPE',
       keyboards: generateKeyboards(),
       guesses:generateGuesses(),
       current_col:0,
       current_row:0,
-      shake:false
+      shake:false,
+      known_letters:[],
+      solved_letters:[],
+      false_letters:[]
     }
   },
   methods:{
@@ -58,8 +67,15 @@ export default {
               console.log(error.response)
               this.shake = true
               setTimeout(() => {
-                this.shake = false
+                this.shake = false;
               }, 1500)
+            }).then(response=>{
+              try{
+                console.log(response);
+                this.checkAnswer()
+              }catch(error){
+                console.log('error')
+              }
             })
         }
         else{
@@ -70,6 +86,44 @@ export default {
         this.guesses[this.current_col][this.current_row].value = key.value;
         this.current_row++;
       }
+    },
+    checkAnswer(){
+      console.log('Checking Answer');
+      var correct = true;
+      for(var i = 0; i<5; i++){
+        if(this.answer.charAt(i) == this.guesses[this.current_col][i].value){
+          this.guesses[this.current_col][i].status = 'solved';
+          this.solved_letters.push(this.guesses[this.current_col][i].value);
+        }
+        else if(this.answer.includes(this.guesses[this.current_col][i].value)){
+          this.guesses[this.current_col][i].status = 'known';
+          this.known_letters.push(this.guesses[this.current_col][i].value);
+          correct = false;
+        }
+        else{
+          this.false_letters.push(this.guesses[this.current_col][i].value);
+          correct = false;
+        }
+      }
+      this.current_col++;
+      this.current_row=0;
+      if(correct){
+        alert('Congratulations!');
+      this.current_col=-1;
+      this.current_row=-1;
+      }
+    },
+    setLetters(key){
+      if(this.solved_letters.includes(key)){
+        return 'solved';
+      }
+      if(this.known_letters.includes(key)){
+        return 'known';
+      }
+      if(this.false_letters.includes(key)){
+        return 'false';
+      }
+      return 'unknown';
     }
   }
 }
@@ -79,6 +133,7 @@ export default {
 body{
   margin: 0px;
   background-color: rgb(27, 27, 27);
+  overflow: hidden;
 }
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
@@ -98,15 +153,35 @@ body{
  
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #888; 
+  background: rgb(155, 155, 155); 
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555; 
+  background: rgb(105, 105, 105); 
+  transition: .5s;
+}
+
+#alert-holder{
+  position: absolute;
+  display: grid;
+  top: 20px;
+  width: 100vw;
+  justify-content: center;
+  text-align: center;
+}
+.alert-box{
+  background-color: rgb(196, 50, 40);
+  color: white;
+  width: 250px;
+  text-align: center;
+  padding: .2em;
+  border-radius: 5px;
+  font-size: 20px;
 }
 #keyboard-holder{
   position: absolute;
+  display: grid;
   bottom: 0px;
   width: 100vw;
   justify-content: center;

@@ -1,5 +1,5 @@
 <template>
-    <div class="key" :style="{width:width, maxWidth:width, backgroundColor:bgColor}" @click="$emit('setGuess')">
+    <div class="key" :style="{width:width, maxWidth:width, backgroundColor:bgColor}" @click="$emit('setGuess')" :disabled="letters=='false'">
         {{ keyboard.value }}
     </div>
 </template>
@@ -7,7 +7,8 @@
 <script>
 export default{
     props:{
-        keyboard: Object
+        keyboard: Object,
+        letters:String
     },
     computed: {
         width(){
@@ -15,10 +16,10 @@ export default{
             return '5vw'; 
         },
         bgColor(){
-            if(this.keyboard.status == 'unknown') return 'rgb(155, 155, 155)';
-            if(this.keyboard.status == 'known') return 'rgb(179, 150, 22)';
-            if(this.keyboard.status == 'solved') return 'rgb(36, 131, 27)';
-            return 'rgb(65, 65, 65)';
+            if(this.letters == 'unknown') return 'rgb(125, 125, 125)';
+            if(this.letters == 'known') return 'rgb(179, 150, 22)';
+            if(this.letters == 'solved') return 'rgb(36, 131, 27)';
+            return 'rgb(35, 35, 35)';
         }
     }
 }
@@ -42,5 +43,8 @@ export default{
     opacity: .8;
     cursor: pointer;
 }
-
+.key[disabled=disabled]{
+    opacity: 1 !important;
+    cursor: default !important;
+}
 </style>
